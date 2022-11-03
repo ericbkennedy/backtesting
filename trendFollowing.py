@@ -52,6 +52,7 @@ cash = costBasis = INITAL_BALANCE
 
 # SPY was above the 10 month MA at the end of October 1998 (110 close v 106.66 MA) so start both long
 initialPrice = months[0][1]
+trendFollowingOutperformingDate = months[0][0] # Used for 'Trend following outperformed through {date}'
 shares = round(cash / initialPrice, 2)
 cash = 0.0 # since we start out long
 bhShares = shares
@@ -102,14 +103,19 @@ for index, (closingDate, openPrice, closePrice, dividend) in enumerate(months):
         shares += round(shares * dividend / closePrice, 2)
         cash = 0.0
 
+    bhValue = round(closePrice * bhShares)
+    tfValue = round(cash + closePrice * shares)
+    if tfValue > bhValue:
+        trendFollowingOutperformingDate = closingDate
+
     output.append((closingDate,
                    openPrice,
                    closePrice,
                    movingAverage,
                    bhShares,
-                   round(closePrice * bhShares, 2),
+                   '${:,}'.format(bhValue),
                    shares,
-                   round(cash + closePrice * shares, 2),
+                   '${:,}'.format(tfValue),
                    taxes,
                    comments))
 
@@ -118,12 +124,17 @@ trendFollowingReturn = round(100 * (closePrice * shares + cash) / INITAL_BALANCE
 
 print(f'{ticker} buy and hold {buyHoldReturn}% vs {trendFollowingReturn}% for trend following since {initialMonth}')
 
+if trendFollowingOutperformingDate == initialMonth:
+    print('Trend following never outperformed buy-and-hold')
+else:
+    print(f'Trend following outperformed through {trendFollowingOutperformingDate}')
+
 filename = ticker + '-return'
 if isTaxableAccount:
     filename += '-taxable'
 
 with open(f'{filename}.csv', mode='w', newline='') as csvOutput:
-    csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='|')
+    csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"')
     csvWriter.writerow(['Month end',
                         'Open at start of month',
                         'Close at end of month',

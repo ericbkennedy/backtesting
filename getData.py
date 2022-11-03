@@ -30,10 +30,14 @@ url = f'https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&
 
 r = requests.get(url)
 
+if len(r.text) < 100 or 'Error' in r.text:
+    print(f'Ticker {ticker} may require a class (e.g. BRK-A) because response length was only {len(r.text)}')
+    print(r.text)
+    exit()
+
 output = [] # list to hold columns after removing high, low and volume
 
 csvInput = r.text.splitlines()
-print(csvInput)
 
 for line in csvInput:
     row = line.split(',')
@@ -48,6 +52,12 @@ for line in csvInput:
     # skip low in row[3]
     closePrice = row[4]
     adjClose = row[5]
+
+    if closePrice != 'close' and (float(closePrice) / float(adjClose) > 1.9 or float(closePrice) / float(adjClose) < 0.5):
+        print(f'A stock split may have occurred on {closingDate} because the adjusted close {adjClose} != historic {closePrice}')
+        print('trendFollowing.py is only intended to backtest ETFs which do not have stock splits')
+        exit()
+
     # skip volume in row[6]
     divAmount = row[7]
     output.append((closingDate, openPrice, closePrice, adjClose, divAmount))
