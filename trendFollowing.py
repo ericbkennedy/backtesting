@@ -46,7 +46,7 @@ with open(f"{ticker}-monthly.csv", newline="") as csvInput:
             raise ValueError("Invalid row length", len(row))
 
 last10closes = []
-rollingSum = movingAverage = shares = bhShares = 0.0
+rollingSum = prevRollingSum = movingAverage = shares = bhShares = 0.0
 initialMonth = months[0][0]
 cash = costBasis = INITAL_BALANCE
 
@@ -88,7 +88,7 @@ for index, (closingDate, openPrice, closePrice, dividend) in enumerate(months):
                 shares = round(cash / nextOpen, 2)
                 comments = f"Bought {shares} at {nextOpen}"
                 cash = 0.0
-        else:  # close below MA so sell if long or stay in cash
+        elif rollingSum <= prevRollingSum:  # close below MA so sell if long or stay in cash
             if shares > 0.0:
                 cash += round(shares * nextOpen, 2)
                 comments = f"Sold {round(shares, 2)} at {nextOpen}"
@@ -99,6 +99,8 @@ for index, (closingDate, openPrice, closePrice, dividend) in enumerate(months):
                     cash -= taxes
                     costBasis = cash
                 shares = 0
+
+    prevRollingSum = rollingSum
 
     if (len(last10closes) < 10 or shares > 0.0):
         # reinvest dividend until 10 month MA can be calculated
