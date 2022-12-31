@@ -79,7 +79,7 @@ for index, (closingDate, openPrice, closePrice, dividend) in enumerate(months):
 
     if len(last10closes) > 10:  # drop entry from 11 months ago
         droppedMonth = last10closes.pop(0)
-        rollingSum -= droppedMonth[1]  # closing price is index = 1
+        rollingSum -= droppedMonth[2]  # closing price is index = 2 (open = 1)
 
     if len(last10closes) == 10:
         movingAverage = round(rollingSum / 10, 2)
